@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="yeniYol">
+    <file>qr_kod.png</file>
+  </qresource>
+</RCC>
