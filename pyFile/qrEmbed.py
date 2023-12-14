@@ -1,74 +1,46 @@
-from PyQt5 import uic
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt,pyqtSignal
 import sys
 
-class DialogKutusu(QDialog):
+from Dialogs import savingQuestion
 
-    def __init__(self):
-        super().__init__()
+def createUI(instance=QGraphicsView):
 
-        uic.loadUi("uiFile\Dialog.ui",self)
+    instance.savingQuestion = savingQuestion()
 
-        self.statement = False
+    desktop = QDesktopWidget().screenGeometry()
+    ekran_genislik = desktop.width()
+    ekran_yukseklik = desktop.height()
 
-        self.saveStatement = False        
+    # TODO:Dosyaya göre boyut ayarı yapılacak
+    # TODO:Arka plana göre qr kod büyüklüğü ayarlanacak
+    instance.setGeometry((ekran_genislik - 600) // 2, (ekran_yukseklik - 800) // 2,600,800)
+    instance.setStyleSheet(
+        """
+        QGraphicsView {
+            background-color: #F9F3CC
+        }
+        """
+    )
 
-        self.cancelBtn.clicked.connect(self.btnClick)
-        self.okeyBtn.clicked.connect(self.btnClick)
+    instance.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    instance.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-    def btnClick(self):
+    instance.myscene = QGraphicsScene()
 
-        btn = self.sender()
+    instance.setScene(instance.myscene)
 
-        if btn.text() != "Kaydetmeden Çık":
 
-            self.saveStatement = True
-
-        else:
-
-            self.saveStatement = False
-
-        self.statement = True
-
-        self.close()
-
-    def closeEvent(self, event):
-
-        return super().closeEvent(event)
-
-class combineWidget(QGraphicsView):
+class qrEmbed(QGraphicsView):
 
     closeSignal = pyqtSignal(list)
 
     def __init__(self):
+
         super().__init__()
 
-        self.dialog = DialogKutusu()
-
-        desktop = QDesktopWidget().screenGeometry()
-        ekran_genislik = desktop.width()
-        ekran_yukseklik = desktop.height()
-
-
-        # TODO:Dosyaya göre boyut ayarı yapılacak
-        # TODO:Arka plana göre qr kod büyüklüğü ayarlanacak
-        self.setGeometry((ekran_genislik - 600) // 2, (ekran_yukseklik - 800) // 2,600,800)
-        self.setStyleSheet(
-            """
-            QGraphicsView {
-                background-color: #F9F3CC
-            }
-            """
-        )
-
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-        self.myscene = QGraphicsScene()
-
-        self.setScene(self.myscene)
+        createUI(self)
 
     def images(self,qrImage,backgroundImage):
 
@@ -113,10 +85,9 @@ class combineWidget(QGraphicsView):
 
         else:
             event.ignore()
-
         
 if __name__ == "__main__":
     App = QApplication(sys.argv)
-    window = combineWidget()
+    window = qrEmbed()
     window.show()
     sys.exit(App.exec())

@@ -4,28 +4,33 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QPixmap
 import fitz
 
-class pageSelector(QWidget):
+def createUI(instance,file_path):
+
+    uic.loadUi("uiFile\pdfSelectPage.ui",instance)
+
+    instance.pixmap_list = instance.getPages(file_path)
+
+    instance.spin_box.setMinimum(1)
+
+    instance.spin_box.setMaximum(len(instance.pixmap_list))
+
+    instance.spin_box.valueChanged.connect(instance.valueChanged)
+
+    instance.okeyBtn.clicked.connect(instance.choose_and_finish)
+
+    instance.pixmapLabel.setPixmap(instance.pixmap_list[instance.spin_box.value()-1])
+
+    instance.pixmapLabel.setScaledContents(True)
+
+class pdfSelectPage(QWidget):
 
     closeSignal = pyqtSignal()
 
     def __init__(self,file_path=str):
+
         super().__init__()
 
-        uic.loadUi("uiFile\pdfSayfaSecme.ui",self)
-
-        self.pixmap_list = self.getPages(file_path)
-
-        self.spin_box.setMinimum(1)
-
-        self.spin_box.setMaximum(len(self.pixmap_list))
-
-        self.spin_box.valueChanged.connect(self.valueChanged)
-
-        self.okeyBtn.clicked.connect(self.choose_and_finish)
-
-        self.pixmapLabel.setPixmap(self.pixmap_list[self.spin_box.value()-1])
-
-        self.pixmapLabel.setScaledContents(True)
+        createUI(self,file_path)
 
     def valueChanged(self):
 
@@ -74,6 +79,6 @@ class pageSelector(QWidget):
 if __name__ == "__main__":
 
     app = QApplication([])
-    widget = pageSelector(r"C:\Users\efkan\Downloads\efkanefekabakcii@gmail.com.pdf")
+    widget = pdfSelectPage(r"C:\Users\efkan\Downloads\efkanefekabakcii@gmail.com.pdf")
     widget.show()
     app.exec_()

@@ -7,80 +7,50 @@ from PyQt5.QtWidgets import *
 from PyQt5 import uic 
 from PyQt5.QtGui import QPixmap
 import resources
-from qrPlace import combineWidget
-from pdfPageSelector import pageSelector
-from pdfBirlestir import png_to_pdf,birlestir
+
+from qrEmbed import qrEmbed
+from pdfSelectPage import pdfSelectPage
+from pdfPutTogether import png_to_pdf,putTogether
+from qrSettings import qrSettings
+
 from sunucuIslemleri import dosyaKontrolEtme, dosyaYukleme
+from  urlNameFixing import nameFixing
 
-class successfulDialog(QDialog):
+from Dialogs import successMsg
 
-    def __init__(self):
-        super().__init__()
+def createUI(instance=QWidget):
 
-        uic.loadUi("uiFile\Dialog_2.ui",self)
+    uic.loadUi("uiFile\qrApp.ui",instance)
 
-        self.okBtn.clicked.connect(lambda:self.close())
+    instance.getFileBtn.clicked.connect(instance.getFile)
 
-class qrSettings(QWidget):
+    instance.getQRBtn.clicked.connect(instance.getQR)
 
-    def __init__(self):
-        super().__init__()
+    instance.combineBtn.clicked.connect(instance.combineUIShow)
 
-        uic.loadUi("uiFile\qrSettings.ui",self)
+    instance.toolButton.clicked.connect(lambda:instance.qrSettings.show())
 
-        self.text = self.qrContent.text()
-
-        self.scale = self.qrScale.value()
-
-        self.createQR(self.text,self.scale)
-
-        self.okeyBtn.clicked.connect(self.qrSettings)
-
-    def qrSettings(self):
-
-        self.text = self.qrContent.text()
-
-        self.scale = self.qrScale.value()
-
-        qr = segno.make_qr(self.text)
-
-        qr.save("qr_code.png", scale=self.scale)
-
-        self.close()
-
-    def createQR(self,url,scale):
-
-        qr = segno.make_qr(url)
-
-        qr.save("qr_code.png", scale=scale)
-
-class MainWidget(QWidget):
+class qrApp(QWidget):
     
     #TODO:Resmi doğru konuma yerleştir, pdf için ayarla
 
-    def __init__(self):
+    def defineModuls(self):
 
-        super(MainWidget,self).__init__()
+        self.combineUI = qrEmbed()
 
-        uic.loadUi(r"uiFile\birlestirici.ui",self)
-
-        self.hide()
-
-        self.combineUI = combineWidget()
-
-        self.dialog = successfulDialog()
+        self.dialog = successMsg()
 
         self.qrSettings = qrSettings()
 
+    def __init__(self):
+
+        super(qrApp,self).__init__()
+
+        self.defineModuls()
+
+        createUI(self)
+
         self.combineUI.closeSignal[list].connect(self.combineAndFinish)
-
-        self.getFileBtn.clicked.connect(self.getFile)
-
-        self.getQRBtn.clicked.connect(self.getQR)
-
-        self.combineBtn.clicked.connect(self.combineUIShow)
-
-        self.toolButton.clicked.connect(self.qrSettingsShow)
 
         self.fileName = None
 
@@ -126,7 +96,7 @@ class MainWidget(QWidget):
 
             self.hide()
 
-            self.pdfPageSelector = pageSelector(self.fileName)
+            self.pdfPageSelector = pdfSelectPage(self.fileName)
 
             self.pdfPageSelector.closeSignal.connect(self.pdfPageSlot)
 
@@ -178,10 +148,6 @@ class MainWidget(QWidget):
 
         self.hide()
 
-    def qrSettingsShow(self):
-
-        self.qrSettings.show()
-
     def combineAndFinish(self,kordinatlar):
 
         self.show()
@@ -189,21 +155,21 @@ class MainWidget(QWidget):
         x = kordinatlar[0]
         y = kordinatlar[1]
 
+        # URL Adı Tanımlama / Hatalı harfleri yok etme
+
+        fileName = nameFixing(self.fileName)
+
         if not kordinatlar[2]:
 
-            fileName = self.fileName.split("/")[-1]
             addingFileName = f"{fileName.split('.')[0]}_qr_eklenmis.png"
-
-            dosyaSozluk = dosyaKontrolEtme(addingFileName)
-            addingFileName = dosyaSozluk["fileName"]
 
         else:
 
-            fileName = self.fileName.split("/")[-1]
             addingFileName = f"{fileName.split('.')[0]}_qr_eklenmis.pdf"
-            
-            dosyaSozluk = dosyaKontrolEtme(addingFileName)
-            addingFileName = dosyaSozluk["fileName"]
+
+        dosyaSozluk = dosyaKontrolEtme(addingFileName)
+
+        addingFileName = dosyaSozluk["fileName"]
 
         self.qrSettings.createQR(f"http://35.246.208.82/files/bIMJ-h5qr-Z3WZ-Oo9A/{addingFileName}",self.qrSettings.scale)            
 
@@ -230,7 +196,7 @@ class MainWidget(QWidget):
 
             png_to_pdf("geciciResimSilme.png")
 
-            birlestir(self.fileName,self.pageNumber,f"OutputFiles\\{addingFileName}")
+            putTogether(self.fileName,self.pageNumber,f"OutputFiles\\{addingFileName}")
 
             dosyaYukleme(f"OutputFiles\\{addingFileName}",addingFileName)
 
@@ -249,7 +215,7 @@ class MainWidget(QWidget):
 if __name__ == "__main__":
 
     app = QApplication([])
-    widget = MainWidget()
+    widget = qrApp()
 
     ekran_geo = app.desktop().screenGeometry()
     widget.move((ekran_geo.width() - widget.width()) // 2, (ekran_geo.height() - widget.height()) // 2)

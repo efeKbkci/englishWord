@@ -15,7 +15,7 @@ def png_to_pdf(png_path):
     c.drawImage(img, 0, 0, width=img_width, height=img_height)
     c.save()
 
-def birlestir(pdf1, eklenecek_sayfa, hedef_pdf):    
+def putTogether(pdf1, eklenecek_sayfa, hedef_pdf):    
 
     with open(pdf1, 'rb') as dosya1:
         pdf1_okuyucu = PyPDF2.PdfReader(dosya1)
