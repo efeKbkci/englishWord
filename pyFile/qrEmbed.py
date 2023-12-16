@@ -67,9 +67,9 @@ class qrEmbed(QGraphicsView):
 
         # Not al
 
-        self.dialog.exec()
+        self.savingQuestion.exec()
 
-        if self.dialog.saveStatement:
+        if self.savingQuestion.saveStatement:
 
             if hasattr(self,"overlay"):
 
@@ -80,7 +80,7 @@ class qrEmbed(QGraphicsView):
                 kordinat = self.overlay.mapToParent(0,0) 
                 self.closeSignal.emit([kordinat.x(),kordinat.y(),self.isPDF])
 
-        elif self.dialog.statement:
+        elif self.savingQuestion.statement:
             event.accept()
 
         else:

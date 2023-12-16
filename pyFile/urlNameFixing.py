@@ -1,6 +1,6 @@
 from os import path
 
-def nameFixing(filePath):
+def nameFixing(filePath=str):
     
     turkish_to_ascii = {
         'ı': 'i',
@@ -17,7 +17,13 @@ def nameFixing(filePath):
         'Ç': 'C'
     }
 
-    filePath = filePath.split("\\")[-1].lower().strip()
+    if filePath.count("/") != 0:
+
+        filePath = filePath.split("/")[-1].lower().strip()
+
+    else:
+
+        filePath = filePath.split("\\")[-1].lower().strip()
 
     fileName, uzanti = path.splitext(filePath)
 
@@ -36,5 +42,8 @@ def nameFixing(filePath):
             else:
 
                 fileName = fileName.replace(character,"_")
+
+    if fileName[0] == "_":
+        fileName = fileName[1:]
 
     return f"{fileName}{uzanti}"

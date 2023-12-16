@@ -12,6 +12,7 @@ from qrEmbed import qrEmbed
 from pdfSelectPage import pdfSelectPage
 from pdfPutTogether import png_to_pdf,putTogether
 from qrSettings import qrSettings
+from versionController import versionController
 
 from sunucuIslemleri import dosyaKontrolEtme, dosyaYukleme
 from  urlNameFixing import nameFixing
@@ -30,6 +31,10 @@ def createUI(instance=QWidget):
 
     instance.toolButton.clicked.connect(lambda:instance.qrSettings.show())
 
+    instance.versionController.successSignal[bool].connect(instance.updateStatus)
+
+    instance.versionController.show()
+
 class qrApp(QWidget):
     
     #TODO:Resmi doğru konuma yerleştir, pdf için ayarla
@@ -41,6 +46,8 @@ class qrApp(QWidget):
         self.dialog = successMsg()
 
         self.qrSettings = qrSettings()
+
+        self.versionController = versionController()
 
     def __init__(self):
 
@@ -55,6 +62,16 @@ class qrApp(QWidget):
         self.fileName = None
 
         self.qrName = None
+
+    def updateStatus(self,status):
+
+        if status: # Güncelleme olmuş, sistem yeniden başlatılacak
+
+            self.close()
+        
+        else: # Güncelleme yok veya başarısız, uygulama eski sürümden devam edecek
+
+            self.show()
 
     def fileExplorer(self):
 
@@ -161,7 +178,8 @@ class qrApp(QWidget):
 
         if not kordinatlar[2]:
 
-            addingFileName = f"{fileName.split('.')[0]}_qr_eklenmis.png"
+            addingFileName = f"{fileName.split('.')[0]}_qr_eklenmis.{fileName.split('.')[1]}" 
+            # jpeg uzantılı bir dosyayı .png olarak kaydettiğimiz için, sunucuya boş, bilgisayarımızda olmayan bir dosya gönderiyorduk.
 
         else:
 
@@ -171,7 +189,7 @@ class qrApp(QWidget):
 
         addingFileName = dosyaSozluk["fileName"]
 
-        self.qrSettings.createQR(f"http://35.246.208.82/files/bIMJ-h5qr-Z3WZ-Oo9A/{addingFileName}",self.qrSettings.scale)            
+        self.qrSettings.createQR(f"https://qrsorgu.com.tr/files/bIMJ-h5qr-Z3WZ-Oo9A/{addingFileName}",self.qrSettings.scale)            
 
         if kordinatlar[2]:
             background = Image.open("geciciResimSilme.png")
@@ -220,5 +238,4 @@ if __name__ == "__main__":
     ekran_geo = app.desktop().screenGeometry()
     widget.move((ekran_geo.width() - widget.width()) // 2, (ekran_geo.height() - widget.height()) // 2)
 
-    widget.show()
     app.exec_()

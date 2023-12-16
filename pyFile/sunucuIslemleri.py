@@ -6,10 +6,10 @@ def dosyaYukleme(filepath,filename):
 
         files = {'file': (filename, file, 'application/octet-stream')}
 
-        response = requests.post("http://35.246.208.82/upload",files=files)
+        response = requests.post("https://qrsorgu.com.tr/upload",files=files)
 
 def dosyaKontrolEtme(filename):
 
-    response = requests.get(f"http://35.246.208.82/control/{filename}")
+    response = requests.get(f"https://qrsorgu.com.tr/control/{filename}")
 
     return response.json()

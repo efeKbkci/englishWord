@@ -218,7 +218,7 @@ background-color: rgba(238, 224, 201,0.8);
  </widget>
  <resources>
   <include location="../resources/resources.qrc"/>
-  <include location="resources.qrc"/>
+  <include location="../resources/resources.qrc"/>
  </resources>
  <connections/>
 </ui>
