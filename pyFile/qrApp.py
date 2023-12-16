@@ -187,6 +187,9 @@ class qrApp(QWidget):
 
         dosyaSozluk = dosyaKontrolEtme(addingFileName)
 
+        if dosyaSozluk == "Hata":
+            self.connectionError()
+
         addingFileName = dosyaSozluk["fileName"]
 
         self.qrSettings.createQR(f"https://qrsorgu.com.tr/files/bIMJ-h5qr-Z3WZ-Oo9A/{addingFileName}",self.qrSettings.scale)            
@@ -204,8 +207,9 @@ class qrApp(QWidget):
         if not kordinatlar[2]:
 
             background.save(f"OutputFiles\\{addingFileName}")
-
-            dosyaYukleme(f"OutputFiles\\{addingFileName}",addingFileName)
+            
+            if dosyaYukleme(f"OutputFiles\\{addingFileName}",addingFileName) == "Hata":
+                self.connectionError()
         
         else:
             remove("geciciResimSilme.png")
@@ -216,7 +220,8 @@ class qrApp(QWidget):
 
             putTogether(self.fileName,self.pageNumber,f"OutputFiles\\{addingFileName}")
 
-            dosyaYukleme(f"OutputFiles\\{addingFileName}",addingFileName)
+            if dosyaYukleme(f"OutputFiles\\{addingFileName}",addingFileName):
+                self.connectionError()
 
             remove("geciciResimSilme.png")
 
@@ -229,6 +234,15 @@ class qrApp(QWidget):
             pass
 
         self.dialog.show()
+
+    def connectionError(self):
+
+        msg = QMessageBox()
+        msg.setText("Bir bağlantı hatası meydana geldi, lütfen internet bağlantınızı kontrole edin.")
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()
+
+        self.close()
 
 if __name__ == "__main__":
 
