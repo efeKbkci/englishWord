@@ -7,6 +7,9 @@ import requests
 from PyQt5.QtWidgets import *
 from PyQt5 import uic 
 
+import os
+import stat
+
 # preload_content parametresi istenen dosyanın bir anda tamamının belleğe alınmayacağını, parça parça okunup işleneceğini ifade eder. Bu parametre varsayılan olarak True'dur. Yani dosyanın tamamı bir anda belleğe alınır. 
 # Büyük dosyalarla çalışırken bu parametrenin false olarak ayarlanması, dosyanın parça parça indirilerek hem yazılımın kitlenmesini engeller, hemde başka işlemler yapmamıza olanak sağlar.
 
@@ -40,38 +43,31 @@ class latestVersion(QThread):
             response = requests.get("https://api.github.com/repos/efeKbkci/englishWord/releases/latest")
             response_json = response.json()
             response.raise_for_status()  # HTTP hataları için
-        except HTTPError as http_err:
+
+
+            self.latest_version = response_json["tag_name"]
+
+            with open("version.txt","r") as version_file:
+
+                current_version = version_file.read()
+
+                if current_version != self.latest_version:
+
+                    exe_file = response_json["assets"][0]["browser_download_url"]
+
+                    self.file_size = response_json["assets"][0]["size"]
+
+                    self.value = exe_file
+
+                else:
+
+                    self.value = "Versiyon Güncel"
+
+            self.responseSignal.emit(self.value)
+
+        except:
             self.responseSignal.emit("Hata")
-            return
-        except ConnectionError as conn_err:
-            self.responseSignal.emit("Hata")
-            return
-        except Timeout as timeout_err:
-            self.responseSignal.emit("Hata")
-            return
-        except RequestException as req_err:
-            self.responseSignal.emit("Hata")
-            return
 
-        self.latest_version = response_json["tag_name"]
-
-        with open("version.txt","r") as version_file:
-
-            current_version = version_file.read()
-
-            if current_version != self.latest_version:
-
-                exe_file = response_json["assets"][0]["browser_download_url"]
-
-                self.file_size = response_json["assets"][0]["size"]
-
-                self.value = exe_file
-
-            else:
-
-                self.value = "Versiyon Güncel"
-
-        self.responseSignal.emit(self.value)
 
 class downloadFile(QThread):
 
@@ -86,44 +82,57 @@ class downloadFile(QThread):
         try:
             response = requests.get(url=self.exe_url, stream=True)
             response.raise_for_status()  # HTTP hataları için
-        except HTTPError as http_err:
+
+            indirilen = 0
+
+            dosya_yolu = os.path.dirname(os.path.abspath(__file__))
+
+            mevcut_izinler = os.stat(dosya_yolu).st_mode
+
+            yeni_izinler = mevcut_izinler | stat.S_IWUSR
+
+            os.chmod(dosya_yolu, yeni_izinler)
+
+            with open(r"qrmain.exe","rb") as file: # Dosya yedeği almak, iptal sonrasında dosyası yeniden oluşturmak için gereklidir.
+
+                self.copy_app = file.read()
+
+            # Dosya o sırada açık olacağı için, doğrudan o dosya üzerinde güncelleme yapılamaz.
+
+            with open(r"qrApp_silme.exe", "wb") as file:
+
+                for data in response.iter_content(chunk_size=1024):
+
+                    if self.iptal:
+
+                        break
+
+                    if data:
+
+                        indirilen += len(data)
+                        self.downloadStatus.emit(indirilen)
+                        file.write(data)
+                
+            if self.iptal:
+
+                print("İptal edildi")
+
+                os.remove(r"qrApp_silme.exe")
+
+                print("qrApp_silme.exe silindi")
+
+                return
+
+            with open("version.txt","w") as version_file:
+
+                version_file.write(self.latest_version)
+
+            self.successSignal.emit()
+
+        except:
             self.downloadStatus.emit(-1)
-            return
-        except ConnectionError as conn_err:
-            self.downloadStatus.emit(-1)
-            return
-        except Timeout as timeout_err:
-            self.downloadStatus.emit(-1)
-            return
-        except RequestException as req_err:
-            self.downloadStatus.emit(-1)
-            return
 
-        indirilen = 0
 
-        with open(r"qrApp.exe","rb") as file: # Dosya yedeği almak, iptal sonrasında dosyası yeniden oluşturmak için gereklidir.
-
-            self.copy_app = file.read()
-
-        with open(r"qrApp.exe", "wb") as file:
-
-            for data in response.iter_content(chunk_size=1024):
-
-                if self.iptal:
-
-                    return
-
-                if data:
-
-                    indirilen += len(data)
-                    self.downloadStatus.emit(indirilen)
-                    file.write(data)
-
-        with open("version.txt","w") as version_file:
-
-            version_file.write(self.latest_version)
-
-        self.successSignal.emit()
         
 class versionController(QWidget):
 
@@ -189,9 +198,7 @@ class versionController(QWidget):
 
     def cancelUpdate(self):
 
-        with open(r"qrApp.exe","wb") as file:
-
-            file.write(self.downloadFileIns.copy_app) # Eski dosya yeniden yüklendi
+        # indirilen veri kopya yazılıma indiği için, bozuk olan veride kopya yazılım olacaktır.
 
         self.downloadFileIns.iptal = True
 

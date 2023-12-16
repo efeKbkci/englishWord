@@ -2,6 +2,7 @@ import segno
 from PIL import Image
 from os import remove,path
 import requests
+import os
 
 from PyQt5.QtWidgets import *
 from PyQt5 import uic 
@@ -65,11 +66,25 @@ class qrApp(QWidget):
 
     def updateStatus(self,status):
 
+        print(status)
+
         if status: # Güncelleme olmuş, sistem yeniden başlatılacak
 
+            print("if bloğu")
+
             self.close()
+
+            print("İndirme başarılı")
         
         else: # Güncelleme yok veya başarısız, uygulama eski sürümden devam edecek
+
+            print("Else bloğu")
+
+            if os.path.isfile("qrApp_silme.exe"):
+
+                print("İndirme başarısız")
+
+                os.remove("qrApp_silme.exe")
 
             self.show()
 
@@ -238,7 +253,7 @@ class qrApp(QWidget):
     def connectionError(self):
 
         msg = QMessageBox()
-        msg.setText("Bir bağlantı hatası meydana geldi, lütfen internet bağlantınızı kontrole edin.")
+        msg.setText("Bir bağlantı hatası meydana geldi, lütfen internet bağlantınızı kontrol edin.")
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
 
